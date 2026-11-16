@@ -220,12 +220,16 @@ function fmt(list){
     (x.when?', '+x.when:'')+')').join('\n');
 }
 function openItems(a){ return (a||[]).filter(x=>x.completed!==true); }
+function changeWhen(v){
+  if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v)||!Number.isFinite(Date.parse(v)))return v;
+  return new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}).format(new Date(v));
+}
 function changeDetail(c){
   const title=c.title||c.key||'';
   if(c.type==='reclassified')return title+' is course module timing, not a separate deadline; its source calendar entry remains present.';
   const to=c.to_time_verification==='unconfirmed' && /^\d{4}-\d{2}-\d{2}$/.test(c.to_date||'')
     ? c.to_date+' (time unconfirmed)' : c.to;
-  return title+(c.from?' · was '+c.from:'')+(to?' · now '+to:'');
+  return title+(c.from?' · was '+changeWhen(c.from):'')+(to?' · now '+changeWhen(to):'');
 }
 
 // The page, the briefing, the GPT payload and the MCP projection all read the
@@ -582,7 +586,7 @@ document.addEventListener('click', async ev=>{
   if(ev.target.closest('[data-pass-older]')){await loadOlderPass();return;}
   if(ev.target.closest('[data-pass-detail-retry]')){await readPassDetail(PASS.recordId);return;}
   const day=ev.target.closest('[data-calendar-day]');
-  if(day&&!day.disabled){CAL.date=day.dataset.calendarDay;render();$('[data-calendar-day="'+CAL.date+'"]').focus({preventScroll:true});return;}
+  if(day&&!day.disabled){CAL.date=day.dataset.calendarDay;render();$('[data-calendar-day="'+CAL.date+'"]').focus({preventScroll:true});const dayList=$('.agenda-list');if(dayList&&dayList.scrollIntoView)dayList.scrollIntoView({behavior:'smooth',block:'start'});return;}
   const month=ev.target.closest('[data-calendar-month]');
   if(month&&!month.disabled){CAL.month=month.dataset.calendarMonth;CAL.date=CAL.month+'-01';render();$('[data-calendar-day="'+CAL.date+'"]').focus({preventScroll:true});return;}
   if(ev.target.closest('[data-calendar-today]')){

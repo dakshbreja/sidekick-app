@@ -1,0 +1,759 @@
+[
+  {
+    "name": "start_practice_item",
+    "description": "Record the actual question/options, versioned source and student-stated confidence BEFORE asking for or accepting an answer. Null confidence means not stated. Persist and read back revision 1 before continuing. No retroactive confidence imports.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "course": {
+          "type": "string",
+          "enum": [
+            "BUSN5000",
+            "MGMT4280",
+            "MGMT5560",
+            "MGMT5850",
+            "LAND2510",
+            "BUSN3040"
+          ]
+        },
+        "term_id": {
+          "type": "string",
+          "enum": [
+            "fall-2026"
+          ]
+        },
+        "sandbox": {
+          "type": "boolean",
+          "default": false
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "item": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "item_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "session_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "source": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "material_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 160
+                },
+                "revision": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "url": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1000
+                },
+                "locator": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "material_id",
+                "revision",
+                "url"
+              ]
+            },
+            "question": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            },
+            "options": {
+              "type": "array",
+              "minItems": 2,
+              "maxItems": 8,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "text": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 600
+                  },
+                  "distractor_type": {
+                    "type": "string",
+                    "enum": [
+                      "concept_confusion",
+                      "calculation",
+                      "sign",
+                      "units",
+                      "reading",
+                      "unspecified"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "text"
+                ]
+              }
+            },
+            "confidence": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 100
+            },
+            "confidence_stated_at": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "recording_agent": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "review_of": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            }
+          },
+          "required": [
+            "item_id",
+            "session_id",
+            "source",
+            "question",
+            "options",
+            "confidence",
+            "confidence_stated_at",
+            "recording_agent"
+          ]
+        }
+      },
+      "required": [
+        "course",
+        "expected_revision",
+        "idempotency_key",
+        "item"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "answer_practice_item",
+    "description": "Finish a started item once with chosen answer, source-backed answer key, help actually used and timestamp. Confidence must already have a server receipt. Immutable after answer; correctness is exact option-ID equality, never mastery.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "course": {
+          "type": "string",
+          "enum": [
+            "BUSN5000",
+            "MGMT4280",
+            "MGMT5560",
+            "MGMT5850",
+            "LAND2510",
+            "BUSN3040"
+          ]
+        },
+        "term_id": {
+          "type": "string",
+          "enum": [
+            "fall-2026"
+          ]
+        },
+        "sandbox": {
+          "type": "boolean",
+          "default": false
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "answer": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "item_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "chosen_answer": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "correct_answer": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "answer_source": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "material_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 160
+                },
+                "revision": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 100
+                },
+                "url": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1000
+                },
+                "locator": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 200
+                }
+              },
+              "required": [
+                "material_id",
+                "revision",
+                "url"
+              ]
+            },
+            "help_level": {
+              "type": "string",
+              "enum": [
+                "none",
+                "hint",
+                "worked_example",
+                "answer_shown"
+              ]
+            },
+            "answered_at": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "recording_agent": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            }
+          },
+          "required": [
+            "item_id",
+            "chosen_answer",
+            "correct_answer",
+            "answer_source",
+            "help_level",
+            "answered_at",
+            "recording_agent"
+          ]
+        }
+      },
+      "required": [
+        "course",
+        "expected_revision",
+        "idempotency_key",
+        "answer"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "read_practice_items",
+    "description": "Read recorded practice items by exact course/term/real-test scope; follow next_offset. No judgments. Exact item_id returns the complete item.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "course": {
+          "type": "string",
+          "enum": [
+            "BUSN5000",
+            "MGMT4280",
+            "MGMT5560",
+            "MGMT5850",
+            "LAND2510",
+            "BUSN3040"
+          ]
+        },
+        "term_id": {
+          "type": "string",
+          "enum": [
+            "fall-2026"
+          ]
+        },
+        "sandbox": {
+          "type": "boolean",
+          "default": false
+        },
+        "item_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "outcome_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": []
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "read_learner_profile",
+    "description": "At the start of a course session after PASS retrieval, read this same-course profile. Read computed aggregates, evidence IDs, student-set hypothesis statuses and due retrieval reviews. Hypotheses are hypotheses, NEVER facts or inferred mastery. Never automatically confirm/reject/ignore or apply grade suggestions.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "course": {
+          "type": "string",
+          "enum": [
+            "BUSN5000",
+            "MGMT4280",
+            "MGMT5560",
+            "MGMT5850",
+            "LAND2510",
+            "BUSN3040"
+          ]
+        },
+        "term_id": {
+          "type": "string",
+          "enum": [
+            "fall-2026"
+          ]
+        },
+        "sandbox": {
+          "type": "boolean",
+          "default": false
+        },
+        "item_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "outcome_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": []
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "read_hypotheses",
+    "description": "Read evidence-derived hypotheses and student-set statuses. Patterns remain hypotheses, never facts or mastery.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "course": {
+          "type": "string",
+          "enum": [
+            "BUSN5000",
+            "MGMT4280",
+            "MGMT5560",
+            "MGMT5850",
+            "LAND2510",
+            "BUSN3040"
+          ]
+        },
+        "term_id": {
+          "type": "string",
+          "enum": [
+            "fall-2026"
+          ]
+        },
+        "sandbox": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": []
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "read_review_items",
+    "description": "Read due retrieval-practice items and exact supporting evidence. Ask a question before hints or re-explanation.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "course": {
+          "type": "string",
+          "enum": [
+            "BUSN5000",
+            "MGMT4280",
+            "MGMT5560",
+            "MGMT5850",
+            "LAND2510",
+            "BUSN3040"
+          ]
+        },
+        "term_id": {
+          "type": "string",
+          "enum": [
+            "fall-2026"
+          ]
+        },
+        "sandbox": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": []
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "set_hypothesis_status",
+    "description": "Relay Daksh’s explicit instruction naming this hypothesis and desired status. Never infer approval, confirm automatically, or apply an outcome suggestion. Preserve source/message reference and exact words; per-call student approval is required.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "course": {
+          "type": "string",
+          "enum": [
+            "BUSN5000",
+            "MGMT4280",
+            "MGMT5560",
+            "MGMT5850",
+            "LAND2510",
+            "BUSN3040"
+          ]
+        },
+        "term_id": {
+          "type": "string",
+          "enum": [
+            "fall-2026"
+          ]
+        },
+        "sandbox": {
+          "type": "boolean",
+          "default": false
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "hypothesis_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "open",
+            "confirmed",
+            "rejected",
+            "ignored"
+          ]
+        },
+        "student_instruction": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 600
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
+            "recording_agent": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            }
+          },
+          "required": [
+            "text",
+            "source",
+            "recording_agent"
+          ]
+        }
+      },
+      "required": [
+        "course",
+        "expected_revision",
+        "idempotency_key",
+        "hypothesis_id",
+        "status",
+        "student_instruction"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "save_grade_outcome",
+    "description": "Save an explicitly student-reported assessment outcome in the separate private outcomes layer. Always reported. Never put grades into PASS or shared status. Portal verification requires the owner original-eLC-read import flow.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "course": {
+          "type": "string",
+          "enum": [
+            "BUSN5000",
+            "MGMT4280",
+            "MGMT5560",
+            "MGMT5850",
+            "LAND2510",
+            "BUSN3040"
+          ]
+        },
+        "term_id": {
+          "type": "string",
+          "enum": [
+            "fall-2026"
+          ]
+        },
+        "sandbox": {
+          "type": "boolean",
+          "default": false
+        },
+        "expected_revision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "outcome": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "outcome_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "assessment_id": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 160
+            },
+            "assessment": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "assessed_at": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 40
+            },
+            "earned": {
+              "type": "number",
+              "minimum": 0
+            },
+            "possible": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "hypothesis_ids": {
+              "type": "array",
+              "maxItems": 20,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160
+              }
+            },
+            "reported_by": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            }
+          },
+          "required": [
+            "outcome_id",
+            "assessment_id",
+            "assessment",
+            "assessed_at",
+            "earned",
+            "possible",
+            "hypothesis_ids",
+            "reported_by"
+          ]
+        }
+      },
+      "required": [
+        "course",
+        "expected_revision",
+        "idempotency_key",
+        "outcome"
+      ]
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "read_grade_outcomes",
+    "description": "Read private assessment outcomes and provenance. Reported is not verified. Suggestions never change hypothesis status until the student approves in Profile.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "course": {
+          "type": "string",
+          "enum": [
+            "BUSN5000",
+            "MGMT4280",
+            "MGMT5560",
+            "MGMT5850",
+            "LAND2510",
+            "BUSN3040"
+          ]
+        },
+        "term_id": {
+          "type": "string",
+          "enum": [
+            "fall-2026"
+          ]
+        },
+        "sandbox": {
+          "type": "boolean",
+          "default": false
+        },
+        "item_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "outcome_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": []
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false
+    }
+  }
+]
