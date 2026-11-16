@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "term_id": "fall-2026",
+  "gradescope_courses": {
+    "BUSN5000": "1353639"
+  },
+  "source_confirmation": {
+    "source_url": "https://www.gradescope.com/courses/1353639",
+    "visible_course": "BUSN5000-Cornwell — Introduction to Data Science for Business and Economics",
+    "visible_term": "Fall 2026",
+    "confirmed_by": "Codex CUA observation on October 10, 2026"
+  }
+}

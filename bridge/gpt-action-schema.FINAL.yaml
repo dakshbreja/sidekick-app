@@ -1,0 +1,159 @@
+# Paste this into each custom GPT: Configure -> Actions -> Schema.
+# Replace WORKER-URL below with the hostname wrangler prints after `npm run deploy`.
+# Auth: Authentication -> API Key -> Bearer, and paste the same API_KEY secret.
+#
+# Read-only on purpose. Notes are written by Claude from the Mac, never by the GPT.
+
+openapi: 3.1.0
+info:
+  title: Daksh Course Status
+  description: Live Fall 2026 coursework status, read fresh from eLC and Google Calendar on every call.
+  version: 1.0.0
+servers:
+  - url: https://ijuh2yp6rf.example-subdomain.workers.dev
+security:
+  - bearerAuth: []
+paths:
+  /status:
+    get:
+      operationId: getCourseStatus
+      summary: Get what is currently due, what class is next, and the latest note from Claude.
+      description: >-
+        Returns live coursework state for one course. Call this at the start of every
+        conversation, before answering anything, and lead with the `briefing` field.
+        Never guess dates from memory — this endpoint is the only current source.
+      parameters:
+        - name: course
+          in: query
+          required: true
+          description: Course code, e.g. BUSN5000, MGMT4280, MGMT5560, MGMT5850, LAND2510, BUSN3040.
+          schema:
+            type: string
+            enum: [BUSN5000, MGMT4280, MGMT5560, MGMT5850, LAND2510, BUSN3040]
+      responses:
+        '200':
+          description: Current status.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  local_time:
+                    type: string
+                    description: Current date and time in Athens, GA.
+                  briefing:
+                    type: string
+                    description: A short summary written to be delivered to Daksh verbatim.
+                  course:
+                    type: object
+                    properties:
+                      code: { type: string }
+                      label: { type: string }
+                      title: { type: string }
+                      instructor: { type: string }
+                      ai_policy:
+                        type: string
+                        description: >-
+                          One of encouraged, banned-on-assignments, unconfirmed. If
+                          banned-on-assignments, help him study but never draft graded work.
+                      ai_note: { type: string }
+                  overdue:
+                    type: array
+                    description: Deadlines already past. Lead with these.
+                    items: { $ref: '#/components/schemas/Deadline' }
+                  due_today:
+                    type: array
+                    items: { $ref: '#/components/schemas/Deadline' }
+                  due_this_week:
+                    type: array
+                    description: Due within seven days.
+                    items: { $ref: '#/components/schemas/Deadline' }
+                  upcoming:
+                    type: array
+                    description: Eight to twenty-one days out.
+                    items: { $ref: '#/components/schemas/Deadline' }
+                  classes_today:
+                    type: array
+                    items: { $ref: '#/components/schemas/Meeting' }
+                  classes_tomorrow:
+                    type: array
+                    items: { $ref: '#/components/schemas/Meeting' }
+                  other_courses_this_week:
+                    type: array
+                    description: Competing load in his other five courses. Use it to judge how much time he actually has.
+                    items: { $ref: '#/components/schemas/Deadline' }
+                  optional_this_week:
+                    type: array
+                    description: >-
+                      Readings, videos, podcasts, practice sets and bonus-point items for
+                      this week. None of this appears in any calendar, so Daksh will not
+                      have seen it anywhere else. Raise these unprompted and ask him
+                      one at a time whether he wants to do them — do not just list them.
+                      An item with graded=true is optional but still carries points.
+                    items: { $ref: '#/components/schemas/OptionalItem' }
+                  optional_ongoing:
+                    type: array
+                    description: Recurring expectations with no single date, e.g. reading before every class.
+                    items: { $ref: '#/components/schemas/OptionalItem' }
+                  optional_not_tracked:
+                    type: string
+                    description: >-
+                      Non-null when this course's optional material has not been transcribed
+                      yet. If set, say plainly that readings and videos are not tracked for
+                      this course rather than implying there are none.
+                  claude_note:
+                    type: object
+                    description: The most recent note left by Claude about what they were working on.
+                    properties:
+                      text: { type: string }
+                      at_local: { type: string }
+                  data_warning:
+                    type: string
+                    description: >-
+                      Non-null when a calendar feed failed to load. If set, say so out loud
+                      before relying on the list — it may be incomplete.
+        '400': { description: Unknown course code. }
+        '401': { description: Missing or invalid API key. }
+components:
+  securitySchemes:
+    # ChatGPT sends this as: Authorization: Bearer <API_KEY>
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    Deadline:
+      type: object
+      properties:
+        title: { type: string }
+        course: { type: string }
+        when:
+          type: string
+          description: Human-readable local due time, e.g. "Sat, Aug 22, 11:59 PM".
+        days_away:
+          type: integer
+          description: Whole calendar days from today. 0 means today.
+        days_late:
+          type: integer
+          description: Present only on overdue items.
+        detail: { type: string }
+    OptionalItem:
+      type: object
+      properties:
+        title: { type: string }
+        course: { type: string }
+        kind:
+          type: string
+          description: One of reading, watch, listen, practice, bonus.
+        window:
+          type: string
+          description: The week this belongs to, or "ongoing".
+        graded:
+          type: boolean
+          description: True when the item is optional but still worth points.
+        note: { type: string }
+    Meeting:
+      type: object
+      properties:
+        course: { type: string }
+        when: { type: string }
+        location: { type: string }

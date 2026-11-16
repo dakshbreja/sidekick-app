@@ -1,0 +1,4 @@
+#!/bin/sh
+# Check staged bytes. Do not inherit hook-time code injection variables.
+unset PYTHONPATH PYTHONHOME
+exec /usr/bin/python3 -I engineering/git_guard.py --staged

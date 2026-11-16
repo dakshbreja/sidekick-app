@@ -1,0 +1,70 @@
+# Deliberately meaningless name: this becomes a public hostname, so it must not
+# identify Daksh or the contents. Access is enforced by API_KEY, not by obscurity —
+# the name is only defence in depth.
+name = "ijuh2yp6rf"
+main = "src/entry.js"
+compatibility_date = "2026-08-19"
+
+# Preview URLs would publish every version at extra public hostnames. One
+# endpoint is enough, and fewer public addresses is the point.
+preview_urls = false
+
+# Secrets — set these with `wrangler secret put <NAME>`, never commit them:
+#   API_KEY        the bearer token the GPT Actions send
+#   FEED_ELC       personal iCal URL from eLC (Calendar -> Subscribe)
+#   FEED_PERSONAL  "Secret address in iCal format" for owner@example.com
+
+# KV namespace for the "last spoke to Claude" notes.
+# Create it with:  wrangler kv namespace create NOTES
+# then paste the returned id below.
+[[kv_namespaces]]
+binding = "NOTES"
+id = "00000000000000000000000000000000"
+
+[[durable_objects.bindings]]
+name = "BRIDGE_STATE"
+class_name = "BridgeState"
+
+[[migrations]]
+tag = "foundation-v1"
+new_sqlite_classes = ["BridgeState"]
+
+[observability]
+enabled = true
+
+# Three feed checks a day, at 7am / 1pm / 7pm Eastern (times are UTC here).
+# eLC due dates move a few times a week, so this is generous already; the point
+# is that the rate is fixed by this schedule and cannot be multiplied by however
+# many browser tabs happen to be open.
+# Note: these are fixed UTC hours, so after DST ends on 1 Nov they land an hour
+# earlier in local time (6am / noon / 6pm). Harmless for a coursework feed.
+[triggers]
+# The health-only schedule writes one metadata snapshot per run (96/day).
+crons = ["0 11,17,23 * * *", "*/15 * * * *"]
+
+# A second, human-readable front door to the canonical bridge. HTTP requests
+# use a service binding so calendar/API secrets cannot drift between hostnames.
+# The original hostname remains the address used by the six existing GPT Actions.
+# Deploy both with:  npm run deploy:all
+[env.coursework]
+name = "coursework"
+# HTTP is forwarded first; do not create an independent records store here.
+durable_objects = { bindings = [] }
+migrations = []
+
+[[env.coursework.services]]
+binding = "PRIMARY_BRIDGE"
+service = "ijuh2yp6rf"
+
+[[env.coursework.kv_namespaces]]
+binding = "NOTES"
+id = "00000000000000000000000000000000"
+
+[env.coursework.observability]
+enabled = true
+
+# Deliberately empty, and it must stay that way: `triggers` is inherited from the
+# top level otherwise, and this Worker shares the KV namespace above. Two copies
+# of the same cron would diff the same feeds against the same keys twice over.
+[env.coursework.triggers]
+crons = []

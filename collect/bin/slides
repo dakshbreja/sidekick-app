@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Put a lecture deck on the right half of the screen, at a given slide.
+#
+# ChatGPT cannot render a Knowledge file in a side pane — that is a platform limit,
+# not a setting. But the thing actually wanted is "chat left, slides right", and that
+# is a window-management problem, which is solvable. The GPT names a deck and a slide
+# number; this puts exactly that on screen next to it.
+#
+#   slides b2l 6        deck matching "b2l", opened at slide 6
+#   slides regression   first match, slide 1
+#   slides              list every deck, grouped by course
+set -uo pipefail
+ROOT="$HOME/Claude/school-system-suite/collect"
+
+decks() { find "$ROOT" -path "*/raw/*.pdf" -o -path "*/pdf/*.pdf" 2>/dev/null | sort; }
+
+if [[ $# -eq 0 ]]; then
+  echo "Decks available:"
+  decks | while read -r f; do
+    course=$(echo "$f" | sed "s|$ROOT/||; s|/.*||")
+    printf "  %-11s %s\n" "$course" "$(basename "$f")"
+  done
+  echo
+  echo "Usage: slides <name fragment> [slide number]"
+  exit 0
+fi
+
+query="$1"; page="${2:-1}"
+match=$(decks | grep -i -- "$query" | head -1)
+if [[ -z "$match" ]]; then
+  echo "No deck matching '$query'. Run 'slides' with no arguments to list them." >&2
+  exit 1
+fi
+
+# file:// with a #page fragment is the only reliable way to land on a specific slide;
+# Preview.app has no equivalent addressing.
+url="file://$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$match")#page=$page"
+
+osascript >/dev/null 2>&1 <<APPLESCRIPT
+tell application "Finder" to set screen to bounds of window of desktop
+set screenW to item 3 of screen
+set screenH to item 4 of screen
+tell application "Google Chrome"
+  set w to make new window
+  set URL of active tab of w to "$url"
+  -- right half, leaving the left half free for the chat window
+  set bounds of w to {screenW / 2, 0, screenW, screenH}
+  activate
+end tell
+APPLESCRIPT
+
+echo "$(basename "$match") — slide $page (right half of screen)"

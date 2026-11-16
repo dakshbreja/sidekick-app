@@ -1,0 +1,10 @@
+{
+  "_comment": "Course code (as discover_courses() derives it) -> ChatGPT custom GPT id. BUSN3040 is listed under both spellings because the code gains its E suffix only once ~/Claude/school-system-suite/collect/BUSN3040E exists, which happens when the shell opens in October.",
+  "BUSN5000": "g-6a7e2549776c81919446e223772daec6",
+  "MGMT4280": "g-6a7e25be8c588191afe4d6cb0d3f1f30",
+  "MGMT5560": "g-6a7e26437bb08191bc55b3eed5326b46",
+  "MGMT5850": "g-6a7e26c7b09081918a2e8e929c9b3680",
+  "LAND2510E": "g-6a7e27c980788191a189acbfc750bb74",
+  "BUSN3040": "g-6a7e27547cbc81919579249bd0a289c8",
+  "BUSN3040E": "g-6a7e27547cbc81919579249bd0a289c8"
+}

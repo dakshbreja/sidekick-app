@@ -1,0 +1,15 @@
+{
+  "name": "gpt-status-bridge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Live course-status endpoint that Daksh's ChatGPT custom GPTs call as an Action.",
+  "scripts": {
+    "test": "node --test 'test/*.test.mjs'",
+    "dev": "wrangler dev",
+    "deploy": "npx wrangler deploy",
+    "deploy:all": "npm test && npx wrangler deploy && npx wrangler deploy --env coursework",
+    "test:mcp": "python3 mcp/test_school_bridge_mcp.py",
+    "test:all": "npm test && npm run test:mcp"
+  }
+}
